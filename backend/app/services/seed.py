@@ -34,4 +34,23 @@ def seed_if_empty(db: Session) -> None:
     db.add(order); db.flush()
     for dcode, portions in [("D-HS", 40), ("D-YC", 30), ("D-JT", 50)]:
         db.add(OrderLine(order_id=order.id, dish_id=dish_ids[dcode], portions=portions))
+    order2 = KitchenOrder(code="KO-0902", outlet="城东门店", status="open")
+    db.add(order2); db.flush()
+    for dcode, portions in [("D-HS", 20), ("D-JT", 30)]:
+        db.add(OrderLine(order_id=order2.id, dish_id=dish_ids[dcode], portions=portions))
+    db.commit()
+
+def ensure_demo_orders(db: Session) -> None:
+    """旧库可能只有一张种子订单：幂等补一张第二订单，保证多订单场景可用。"""
+    existing = {o.code for o in db.scalars(select(KitchenOrder)).all()}
+    if "KO-0902" in existing:
+        return
+    d_hs = db.scalars(select(Dish).where(Dish.code == "D-HS")).first()
+    d_jt = db.scalars(select(Dish).where(Dish.code == "D-JT")).first()
+    if not d_hs or not d_jt:
+        return
+    order2 = KitchenOrder(code="KO-0902", outlet="城东门店", status="open")
+    db.add(order2); db.flush()
+    db.add(OrderLine(order_id=order2.id, dish_id=d_hs.id, portions=20))
+    db.add(OrderLine(order_id=order2.id, dish_id=d_jt.id, portions=30))
     db.commit()

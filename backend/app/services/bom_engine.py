@@ -1,4 +1,8 @@
-"""Central kitchen BOM explode: order lines × BOM qty, merge ingredients, shortage = need - stock."""
+"""Central kitchen BOM explode: order lines × BOM qty, merge ingredients, shortage = need - stock.
+
+定额分两层：全局基准 BOM（bom_lines）+ 订单级覆盖（overrides）。
+覆盖只对指定订单生效，其它订单与全局树一律不变。
+"""
 from __future__ import annotations
 from dataclasses import asdict, dataclass
 
@@ -11,6 +15,17 @@ class NeedLine:
     need_qty: float
     stock_qty: float
     shortage: float
+
+def apply_overrides(base_bom: list[dict], overrides: list[dict]) -> list[dict]:
+    """用本单覆盖替换基准定额中同 (dish_id, ingredient_id) 的行；其余基准行保留。"""
+    eff = {(b["dish_id"], b["ingredient_id"]): dict(b) for b in base_bom}
+    for o in overrides:
+        eff[(o["dish_id"], o["ingredient_id"])] = {
+            "dish_id": o["dish_id"],
+            "ingredient_id": o["ingredient_id"],
+            "qty_per_portion": o["qty_per_portion"],
+        }
+    return list(eff.values())
 
 def explode_and_merge(
     order_lines: list[dict],
@@ -40,10 +55,11 @@ def explode_and_merge(
         ))
     return lines
 
-def result_to_dict(lines: list[NeedLine]) -> dict:
+def result_to_dict(lines: list[NeedLine], dish_ids: list[int] | None = None) -> dict:
     return {
         "prep_lines": [asdict(l) for l in lines],
         "shortages": [asdict(l) for l in lines if l.shortage > 0],
+        "dishes": sorted(set(dish_ids or [])),
         "stats": {
             "ingredient_count": len(lines),
             "shortage_count": sum(1 for l in lines if l.shortage > 0),

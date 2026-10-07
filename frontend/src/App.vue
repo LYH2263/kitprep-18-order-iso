@@ -1,10 +1,17 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { RouterLink, RouterView } from 'vue-router'
+import OrderChips from './components/OrderChips.vue'
+import { activeOrder, loadOrders } from './orderContext'
+
+const ctx = activeOrder()
+onMounted(() => { if (!ctx.loaded) loadOrders() })
 </script>
 <template>
   <div class="kp-kitchen">
     <header class="kp-order-bar">
       <div class="kp-brand">KitPrep · 中央厨房备料台</div>
+      <OrderChips />
       <nav class="kp-chips">
         <RouterLink to="/orders" class="kp-chip">订单</RouterLink>
         <RouterLink to="/prep" class="kp-chip">备料单</RouterLink>
