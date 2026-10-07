@@ -7,7 +7,7 @@ const routes = [
   { path: '/prep', name: 'Prep', component: () => import('../views/Prep.vue') },
   { path: '/shortages', name: 'Shortages', component: () => import('../views/Shortages.vue') },
   { path: '/inventory', name: 'Inventory', component: () => import('../views/Inventory.vue') },
-  { path: '/', redirect: '/dishes' },
+  { path: '/', redirect: '/orders' },
 ]
 
 export default createRouter({

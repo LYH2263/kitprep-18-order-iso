@@ -51,6 +51,29 @@ a { color: inherit; text-decoration: none; }
   background: var(--kp-accent); color: #1c1208; font-weight: 800;
 }
 .kp-chip:hover { filter: brightness(1.08); }
+button.kp-chip { font: inherit; cursor: pointer; }
+.kp-chip-order { background: #2e3a43; border-color: #1a2229; }
+.kp-chip-order.kp-chip-active {
+  background: var(--kp-ok); color: #eaf5ec; font-weight: 800;
+  box-shadow: 0 0 0 2px rgba(47,107,58,0.45);
+}
+.kp-error {
+  background: rgba(179,58,43,0.14); color: var(--kp-bad);
+  border: 1px solid var(--kp-bad); border-radius: 2px;
+  padding: 0.45rem 0.7rem; font-size: 0.8rem; margin-bottom: 0.75rem;
+}
+.kp-qty-input {
+  width: 4.5rem; padding: 0.15rem 0.3rem; font-size: 0.78rem;
+  border: 1px solid var(--kp-steel); border-radius: 2px;
+  background: #f7f2e8; color: var(--kp-ink); text-align: right;
+}
+.btn-mini {
+  background: var(--kp-steel); color: #f0e6d8; border: none;
+  border-radius: 2px; padding: 0.2rem 0.55rem; cursor: pointer;
+  font-weight: 700; font-size: 0.72rem;
+}
+.btn-mini:hover { filter: brightness(1.1); }
+.btn-mini.danger { background: var(--kp-bad); }
 
 .kp-bench {
   flex: 1; padding: 0.85rem 1rem 1.25rem; overflow: auto;

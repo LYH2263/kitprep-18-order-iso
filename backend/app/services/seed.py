@@ -2,6 +2,19 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from app.models.models import BomLine, Dish, Ingredient, KitchenOrder, OrderLine
 
+# 标准定额模板:开单时拷贝到订单名下,之后每单各改各的、互不影响
+STANDARD_BOM = [
+    ("D-HS", "I-PR", 0.25), ("D-HS", "I-RC", 0.15), ("D-HS", "I-SC", 0.02), ("D-HS", "I-OL", 0.03),
+    ("D-YC", "I-EG", 0.3), ("D-YC", "I-RC", 0.15), ("D-YC", "I-SC", 0.015), ("D-YC", "I-OL", 0.025),
+    ("D-JT", "I-CK", 0.12), ("D-JT", "I-ND", 0.2), ("D-JT", "I-SC", 0.01),
+]
+
+SEED_ORDERS = [
+    ("KO-0901", "城西门店", [("D-HS", 40), ("D-YC", 30), ("D-JT", 50)]),
+    ("KO-0902", "城东门店", [("D-HS", 25), ("D-YC", 45), ("D-JT", 10)]),
+]
+
+
 def seed_if_empty(db: Session) -> None:
     if (db.scalar(select(func.count()).select_from(Dish)) or 0) > 0:
         return
@@ -23,15 +36,13 @@ def seed_if_empty(db: Session) -> None:
     for code, name, unit, stock in ings:
         i = Ingredient(code=code, name=name, unit=unit, stock_qty=stock)
         db.add(i); db.flush(); ing_ids[code] = i.id
-    bom = [
-        ("D-HS", "I-PR", 0.25), ("D-HS", "I-RC", 0.15), ("D-HS", "I-SC", 0.02), ("D-HS", "I-OL", 0.03),
-        ("D-YC", "I-EG", 0.3), ("D-YC", "I-RC", 0.15), ("D-YC", "I-SC", 0.015), ("D-YC", "I-OL", 0.025),
-        ("D-JT", "I-CK", 0.12), ("D-JT", "I-ND", 0.2), ("D-JT", "I-SC", 0.01),
-    ]
-    for dcode, icode, qty in bom:
-        db.add(BomLine(dish_id=dish_ids[dcode], ingredient_id=ing_ids[icode], qty_per_portion=qty))
-    order = KitchenOrder(code="KO-0901", outlet="城西门店", status="open")
-    db.add(order); db.flush()
-    for dcode, portions in [("D-HS", 40), ("D-YC", 30), ("D-JT", 50)]:
-        db.add(OrderLine(order_id=order.id, dish_id=dish_ids[dcode], portions=portions))
+    for code, outlet, lines in SEED_ORDERS:
+        order = KitchenOrder(code=code, outlet=outlet, status="open")
+        db.add(order); db.flush()
+        for dcode, portions in lines:
+            db.add(OrderLine(order_id=order.id, dish_id=dish_ids[dcode], portions=portions))
+        # 每单拷贝一份定额树,订单之间互不可见
+        for dcode, icode, qty in STANDARD_BOM:
+            db.add(BomLine(order_id=order.id, dish_id=dish_ids[dcode],
+                           ingredient_id=ing_ids[icode], qty_per_portion=qty))
     db.commit()
